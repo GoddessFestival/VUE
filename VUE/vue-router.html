@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仿ele-form</title>
+    <style>
+        .router-link-active{
+            font-weight: 600;
+            color:blueviolet;
+        }
+    </style>
+    <script src="./lib/vue.js"></script>
+    <script src="./lib/vue-router.js"></script>
+    <!-- 因为 AJAX 库和通用工具的生态已经相当丰富，Vue 核心代码没有重复 -->
+    <!-- 提供这些功能以保持精简。这也可以让你自由选择自己更熟悉的工具。 -->
+    <script src="./lib/axios.min.js"></script>
+    <script src="./lib/lodash.min.js"></script>
+    <!-- <script src="https://unpkg.com/vue-router/dist/vue-router.js"></script> -->
+</head>
+
+<body>
+    <div id="root">
+        <!--  root -->
+        <h1>{{title}}</h1>
+        <p>
+            <router-link to="/foo">nav-foo</router-link>
+            <router-link to="/bar">nav-bar</router-link>
+        </p>
+        <!-- 路由视图 -->
+        <router-view></router-view>
+        <p>
+            <button @click="$router.go(1)">前進</button>
+            <button @click="$router.go(-1)">後退</button>
+        </p>
+
+
+    </div>
+
+    <script>
+        const { log } = console;
+
+        const Foo = { template: '<div>foo</div>' }
+        const Bar = { template: '<div>bar</div>' }
+        const User = {
+            props:['id'],
+            template: '<div><h4>User {{$route.params.id}}</h4><router-view></router-view/></div>',
+            created(){
+                log(this.id)
+            },
+            mounted(){
+                log(this.id)
+            },
+            beforeRouteEnter(to,from,next){
+                log('组件内守卫','beforeRouteEnter')
+                next()
+            },
+            beforeRouteUpdate(to,from,next){
+                log('组件内守卫','beforeRouteUpdate')
+                next()
+            },
+            beforeRouteLeave(to,from,next){
+                log('组件内守卫','beforeRouteLeave')
+                next();
+            }
+        }
+        const UserPolify = {
+            beforeRouteEnter(to,from,next){
+                // if(to.matched.some( item => item.meta.requiresAuth === true)){
+                //     log('to logon');
+                    
+                // }else{
+                    
+                // }
+                next()
+
+            },
+            template:`<div><h3>user-polify</h3><button @click="$router.push('/foo')">Go To Foo</button><button @click="$router.push('/bar')">Go To Bar</button></div>`
+        }
+        // Vue.use(VueRouter);
+
+        const router = new VueRouter({
+            routes: [
+                { path: '/foo', component: Foo },
+                { 
+                    path: '/bar', 
+                    component: Bar,
+                    beforeEnter(to,from,next){
+                        log('路由独享','beforeEnter');
+                        next();
+                    }
+                },
+                {
+                    path: '/user/:id', component: User,
+                    children: [
+                        {path:'polify',component:UserPolify,meta:{requiresAuth:true}}
+                    ],
+                    props:true
+
+                }
+            ]
+        });
+
+        // 全局路由守卫
+        router.beforeEach(function(to,from,next){
+            log('全局路由守卫',"beforeEach");
+             if(to.matched.some( item => item.meta.requiresAuth === true)){
+                   if(!false){
+                       next({
+                           path:'/bar',
+                           query: { redirect: to.fullPath}
+                       })
+
+                   }else{
+                     next();
+                   }
+
+                    
+            }else{
+                next();   
+            }
+            // next(new Error('errpr'));
+           
+
+        })
+        router.beforeResolve(function(to,from,next){
+            log('全局路由守卫',"beforeResolve");  
+            next();                
+        })
+        router.afterEach(function(to,from){
+            log('全局路由守卫',"afterEach"); 
+        })
+        router.onError(function(err){
+            log(err)
+        })
+        // 路由独享守卫 beforeEnter
+        // 组件内守卫
+
+        const vm = new Vue({
+            el: "#root",
+            router,
+            data: function () {
+                return {
+                    title: '开课吧-路由'
+                }
+            }
+        })
+
+        log(vm, router);
+
+
+    </script>
+
+</body>
+
+</html>

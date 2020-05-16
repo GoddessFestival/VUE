@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仿ele-form</title>
+    <script src="./lib/vue.js"></script>
+    <!-- 因为 AJAX 库和通用工具的生态已经相当丰富，Vue 核心代码没有重复 -->
+    <!-- 提供这些功能以保持精简。这也可以让你自由选择自己更熟悉的工具。 -->
+    <script src="./lib/axios.min.js"></script>
+    <script src="./lib/lodash.min.js"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- 引入组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+</head>
+
+<body>
+    <div id="root">
+        <!--  root -->
+        <h1>{{title}}</h1>
+        <hr />
+        <h3>{{userName}}</h3>
+
+        <!-- <div>
+            <div>
+                <label for="">课程名字</label><input type="text" v-model:value="courseInfo.name" name="courseName">
+            </div>
+            <div>
+                <label for="">课程价格</label><input type="text" v-model:value="courseInfo.price" name="coursePrice">
+            </div>
+            <button type="button" @click="addCourseToList">添加课程到列表</button>
+        </div> -->
+        <!-- <el-form :model="courseInfo" :rules="rules" ref="courseInfoForm">
+            <el-form-item  label="课程名字" prop="userName">
+                <el-input v-model="courseInfo.userName" ></el-input>
+            </el-form-item>
+            <el-form-item label="价格" prop="password" >
+                <el-input v-model="courseInfo.password"></el-input>
+            </el-form-item>
+        </el-form> -->
+
+        <input :value="userName" @input="userName = $event.target.value" />
+        <k-form>
+            <k-form-item  label="课程名字" prop="userName">
+                <k-input v-model="userName"></k-input>
+            </k-form-item>
+        </k-form>
+
+     
+
+
+
+    </div>
+
+    <script>
+        const { log } = console;
+        // 自定义组件  k-input  k-item  k-form
+        // 根据w3c规范，dom中属性
+        // this.$emit方法不能使用驼峰命名的函数 (html或dom模板中 属性是不区分大小写)
+        // v-model: 给组件添加了一个 value 属性； 给当前组件添加了一个input事件
+        var KInput = {
+            inject:['a'],
+            props:['userName'],
+            template:`<input type="text" :value="userName"  @input="$emit('input',$event.target.value)" />`,
+            created(){
+                log(this.a)
+            }
+        }
+        var KFormItem = {
+            props:['label','prop'],
+            template:`<div><label>{{this.label}}</label><slot></slot></div>`
+        } 
+
+        var KForm = {
+            provide(){
+                return {
+                    a:1
+                }
+            },
+            template:`<div><slot></slot></div>`
+        }
+
+
+        var vm = new Vue({
+            el: '#root',
+            components: {
+                KInput,
+                KFormItem,
+                KForm
+            },
+            data:function(){
+                return {
+                    title:'仿ele-form',
+                    visible:false,
+                    userName:'1111',
+                    password:'',
+                    rules:{
+                        userName:[
+                            {required: true,},
+                            {min:12,message:'最小12个字符'}
+                        ],
+                        password:[
+                            {required:true,},
+                            {max:6,message:'最长 六位数'}
+                        ]
+                    }
+
+                }
+            },
+            methods:{
+                addCourseToList(){
+                    log('Click Event')
+                },
+                getDate(e){
+                    log(e.target.value)
+                }
+            }
+
+        })
+        vm.$watch("courseInfo.userName",function(newValue,oldValue){
+            log(newValue,oldValue);
+        })
+
+
+
+    </script>
+
+</body>
+
+</html>

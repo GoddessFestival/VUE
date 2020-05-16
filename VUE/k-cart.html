@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="./lib/vue.js"></script>
+    <!-- 因为 AJAX 库和通用工具的生态已经相当丰富，Vue 核心代码没有重复 -->
+    <!-- 提供这些功能以保持精简。这也可以让你自由选择自己更熟悉的工具。 -->
+    <script src="./lib/axios.min.js"></script>
+    <script src="./lib/lodash.min.js"></script>
+</head>
+
+<body>
+
+    <div id="root">
+        <!--  root -->
+        <h1>{{title}}</h1>
+        <hr />
+        <h2>添加课程</h2>
+        <div>
+            <div>
+                <label for="">课程名字</label><input type="text" v-model:value="courseInfo.name" name="courseName">
+            </div>
+            <div>
+                <label for="">课程价格</label><input type="text" v-model:value="courseInfo.price" name="coursePrice">
+            </div>
+            <button type="button" @click="addCourseToList">添加课程到列表</button>
+        </div>
+        <hr />
+        <table>
+            <tr>
+                <th>课程名字</th>
+                <th>课程价格</th>
+            </tr>
+            <tr v-for="(course,index) in courseList" :key="course.id">
+                <td>{{course.name}}</td>
+                <td>{{course.price}}</td>
+                <td><button type="button" @click="addCourseToCart(course.id)">加入购物车</button></td>
+            </tr>
+        </table>
+        <h2>购物车</h2>
+        <cart :course-item='courseItem' @minus-num='minusHandler' @plus-num='plusHandler' />
+
+    </div>
+
+    <script>
+        const { log } = console;
+        // 自定义组件  k-input  k-item  k-form
+        // 根据w3c规范，dom中属性
+        // this.$emit方法不能使用驼峰命名的函数 (html或dom模板中 属性是不区分大小写)
+        var Cart = {
+            // 子组件遵守单项数据流原则（子组件最好不要通过js改变父组件的数据）
+            props: ['courseItem'],
+            computed: {
+                isActiveCourse() {
+                    // 选中项
+                    return this.courseItem.filter(function(item){
+                        return item.isActive;
+                    })
+
+                },
+                allCourseList() {
+                    // 多少
+                    return this.courseItem.length;
+
+                },
+                allPrice() {
+                    // 总价
+                    var sum = 0;
+                    this.isActiveCourse.forEach(function(item){
+                        sum += item.num * item.price;
+                    });
+                    return sum;
+                },
+            },
+            methods: {
+                minusNum(id) {
+                    this.$emit('minus-num', id);
+                },
+                plusNum(id) {
+                    this.$emit('plus-num', id);
+                }
+            },
+            template: '<table><tr><th>勾选</th><th>课程名称</th> <th>课程价格</th><th>数量</th><th>价格</th></tr>'
+                + '<tr v-for="(course,index) in courseItem" :key="course.id" >'
+                + '<td><input type="checkbox" v-model="course.isActive" /></td>'
+                + '<td>{{course.name}}</td>'
+                + '<td>{{course.price}}</td>'
+                + '<td><button type="button" @click="minusNum(course.id)">-</button>{{course.num}}<button type="button"  @click="plusNum(course.id)">+</button></td>'
+                + '<td>{{course.price * course.num}}</td>'
+                + '</tr>'
+                + '<tr>'
+                + '<td colspan="2"></td>'
+                + '<td colspan="2">{{isActiveCourse.length}}/{{allCourseList}}</td>'
+                + '<td colspan="2">{{allPrice}}</td>'
+                + '</tr>'
+                + '</table>'
+        }
+
+        var vm = new Vue({
+            el: '#root',
+            components: {
+                Cart
+            },
+            data: function () {
+                return {
+                    title: '开课吧-购物车案例',
+                    // 课程信息
+                    courseInfo: {
+                        name: "",
+                        price: ""
+                    },
+                    // 购物车
+                    courseItem: [],
+                    // 课程列表
+                    courseList: [
+                        {
+                            id: 0,
+                            name: 'web全栈工程师',
+                            price: 9998
+                        }, {
+                            id: 1,
+                            name: 'Python人工智能',
+                            price: 8888
+                        }
+                    ]
+                }
+
+            },
+            methods: {
+
+                minusHandler(id) {
+                    var course = this.courseItem.find(course => course.id === id);
+                    if (course.num > 1) {
+                        course.num--;
+                    } else {
+                        if (confirm("delete this item ?")) {
+                            var index = this.courseItem.indexOf(course);
+                            this.courseItem.splice(index, 1);
+                        }
+                    }
+
+                },
+                plusHandler(id) {
+                    var course = this.courseItem.find(course => course.id === id);
+                    course.num++;
+                },
+                addCourseToList() {
+                    // this.courseList.push({name:this.courseName,price:this.coursePrice});
+                },
+                addCourseToCart(id) {
+                    var course = this.courseList.find(function (course) { return course.id === id });
+                    var isHasCourse = this.courseItem.find(function (course) { return course.id === id });
+                    log(isHasCourse);
+                    if (isHasCourse) {
+                        // 
+                        isHasCourse.num++;
+                    } else {
+                        this.courseItem.push({
+                            id: id,
+                            name: course.name,
+                            price: course.price,
+                            num: 1,
+                            isActive: true
+                        });
+                    }
+                },
+
+            }
+        });
+
+
+
+    </script>
+
+</body>
+
+</html>

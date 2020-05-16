@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仿ele-form</title>
+    <style>
+        .router-link-active {
+            font-weight: 600;
+            color: blueviolet;
+        }
+    </style>
+    <script src="./lib/vue.js"></script>
+    <script src="./lib/vue-router.js"></script>
+    <script src="./lib/vuex.js"></script>
+    <!-- 因为 AJAX 库和通用工具的生态已经相当丰富，Vue 核心代码没有重复 -->
+    <!-- 提供这些功能以保持精简。这也可以让你自由选择自己更熟悉的工具。 -->
+    <script src="./lib/axios.min.js"></script>
+    <script src="./lib/lodash.min.js"></script>
+    <!-- <script src="https://unpkg.com/vue-router/dist/vue-router.js"></script> -->
+    <!-- <script src="https://unpkg.com/vuex/dist/vuex.js"></script> -->
+
+</head>
+
+<body>
+    <div id="root">
+        <!--  root -->
+        <div class="navbar">
+            <router-link to="/home">home-page</router-link> |
+            <router-link to="/about">about-page</router-link>
+        </div>
+        <!-- 视图 -->
+        <router-view />
+
+
+    </div>
+
+    <script>
+        const { log } = console;
+        log(Vue.version);
+        log(VueRouter);
+        log(Vuex.version);
+
+        const Login = {
+            data: function () {
+                return {
+                    modal: {
+                        username: '',
+                        password: ''
+                    }
+                }
+            },
+            methods: {
+                loginHandle() {
+                    log('---login handler---');
+                    this.$store.dispatch('login',this.modal).then(function(code){
+                        log('---get code---')
+                        if(code == 401){
+                            log('登录失败')
+                        }else{
+                            // 登录成功
+                            const path = this.$route.query.redirect || '/';
+                            this.$router.push({path: path})
+                        }
+                    })
+
+                }
+
+            },
+            template: `<form :modal="modal">  
+                        <input type="text" placeholder="username" v-model="modal.username" /> <br/>
+                        <input type="text" placeholder="password" v-model="modal.password" /> <br/>
+                        <button type="button" @click="loginHandle">Login</button>
+                    </form>`
+        }
+
+        const Home = {
+            template: '<h2>home-page</h2>'
+        }
+        const About = {
+            template: '<div class="about"> This is about view</div>'
+        }
+        const routes = [
+            {
+                path: '/',
+                redirect: '/home'
+            },
+            {
+                path: '/home',
+                name: 'home',
+                component: Home
+            },
+            {
+                path: '/about',
+                name: 'about',
+                component: About,
+                meta: { auth: true }
+            },
+            {
+                path: '/login',
+                name: 'login',
+                component: Login
+            }
+        ]
+        const router = new VueRouter({
+            // mode: 'history',
+            routes
+        })
+
+        router.onError(function (err) {
+            log(err)
+        })
+        //  全局独享守卫
+        router.beforeEach((to, from, next) => {
+            log(to)
+            if (to.meta.auth) {
+                next({
+                    path: '/login',
+                    query: { redirect: to.fullPath }
+                })
+            } else {
+                next()
+            }
+        })
+        const api = {
+            login:function(userInfo){
+                return axios.get('/api/login',userInfo);
+            }
+        }
+
+        // 组件内守卫
+        const store = new Vuex.Store({
+            state: {
+                isLogin: false
+            },
+            getters: {
+
+            },
+            mutations: {
+                setLoginState(state, payload){
+                    state.isLogin = payload
+                }
+            },
+            actions: {
+                // user 登录信息
+                login({commit}, user){
+                    // 调用登录接口 并重置localStorage
+                    api.login(user).then(function(res){
+                        const {code,token} = res.date;
+                        if(token){
+                            commit('setLoginState', true)
+                        }
+                        localStorage.setItem('auth',token);
+                        return code;
+                    })
+
+                }
+
+            }
+
+        })
+        log(store);
+
+        const vm = new Vue({
+            el: "#root",
+            router,
+            store,
+            data: function () {
+                return {
+                    title: '开课吧-路由'
+                }
+            },
+            methods: {
+                // mapStates
+                ...Vuex.mapActions({
+                    plus: "increment",
+                    minus: "decrement"
+                })
+            },
+            computed: {
+
+            }
+        })
+
+
+    </script>
+
+</body>
+
+</html>

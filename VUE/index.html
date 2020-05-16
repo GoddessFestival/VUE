@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!-- 因为 AJAX 库和通用工具的生态已经相当丰富，Vue 核心代码没有重复 -->
+    <!-- 提供这些功能以保持精简。这也可以让你自由选择自己更熟悉的工具。 -->
+    <script src="https://cdn.jsdelivr.net/npm/axios@0.12.0/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.13.1/lodash.min.js"></script>
+    <!-- <script src="https://unpkg.com/vue/dist/vue.js"></script> -->
+    <script src="https://unpkg.com/vue-router/dist/vue-router.js"></script>
+</head>
+
+<body>
+
+    <div id="root">
+       <!--  root -->
+       <k-input :value="value" :type="type"  @input-event="inputEventHandler"></k-input>
+    </div>
+
+
+    <script>
+        const {log} = console;
+        // 自定义组件  k-input  k-item  k-form
+        // 根据w3c规范，dom中属性
+        // this.$emit方法不能使用驼峰命名的函数 (html或dom模板中 属性是不区分大小写)
+       // Event "eventh" is emitted in component <KInput> but the handler is registered for "eventH".
+       // Note that HTML attributes are case-insensitive and you cannot use v-on to listen to camelCase events when using in-DOM templates. You should probably use "event-h" instead of "eventH".
+        var KInput = {
+            props:['value','type'],
+            template:'<input :type="type" :value="value" @input="emitInputEventHandler"/>',
+            methods:{
+                emitInputEventHandler(e){
+                    // 事件名称不能用驼峰方式命名， 元素属性是不区分大小写，驼峰形式将无法监听此事件
+                    this.$emit('input-event',e)
+                }
+            }
+
+        }
+
+        var vm = new Vue({
+            el:'#root',
+            components:{
+                KInput
+            },
+            data:function(){
+                return {
+                    a:1,
+                    value:"",
+                    type:"text"
+                }
+            },
+            methods:{
+                inputEventHandler(e){
+                    log(e);
+                    var target = e.target.value;
+                    this.value = target;
+                }
+            }
+        })
+        log(vm);
+        // $watch  方法处理 异步请求 或 耗时较长的操作
+        vm.$watch("a",function(newValue,oldVlue){
+            log(newValue);
+            log(oldVlue);
+        })
+
+    </script>
+
+</body>
+
+</html>
